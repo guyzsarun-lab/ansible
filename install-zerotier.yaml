@@ -1,0 +1,20 @@
+- name: Install Zerotier
+  hosts: proxmox_vm
+  gather_facts: true
+
+  tasks:
+  - name: Install, Config Zerotier
+    become: true
+    shell: |
+      curl -s https://install.zerotier.com | sudo bash
+
+  - name: Start Zerotier
+    systemd:
+      name: zerotier-one
+      state: restarted
+      enabled: true
+      daemon_reload: true
+
+  - name: Join Network
+    shell: |
+      zerotier-cli join {{ zerotier_network_id }}
