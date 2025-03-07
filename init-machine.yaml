@@ -1,0 +1,34 @@
+- name: Init Machine
+  hosts: proxmox_vm
+  gather_facts: true
+
+  tasks:
+  - name: Install essentials
+    apt:
+      name:
+        - docker
+        - net-tools
+        - gpg
+        - docker-compose
+        # - prometheus-node-exporter
+        # - nfs-common
+      state: present
+      update_cache: yes
+
+  - name: Add Docker group
+    block:
+    - name: Create "docker" group
+      group:
+        name: docker
+        state: present
+
+    - name: Add remote "ubuntu" user to "docker" group
+      user:
+        name: "{{ ansible_user }}"
+        groups: docker
+        append: yes
+    become: true
+
+  - name: Update hostname
+    hostname:
+      name: "{{ inventory_hostname }}"
