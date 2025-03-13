@@ -1,1 +1,5 @@
 *.crt
+
+**/group_vars/*
+**/host_vars/*
+**/hosts
