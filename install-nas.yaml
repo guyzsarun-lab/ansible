@@ -1,0 +1,37 @@
+---
+- name: Install NAS
+  hosts: nas-server
+  become: true
+  vars:
+    data_dir: /home/devops/nfs_share
+
+  tasks:
+  - name: Install nfs server
+    apt:
+      name:
+        - nfs-kernel-server
+        - prometheus-node-exporter
+      state: present
+
+  - name: Create NAS directory
+    file:
+      path: "{{ data_dir }}"
+      state: directory
+      owner: devops
+      group: devops
+      mode: '0775'
+
+  - name: Copy exports file
+    copy:
+      dest: /etc/exports
+      content: |
+        {{ data_dir }}            *(rw,sync,no_subtree_check,no_root_squash)
+
+  - name: Restart nfs-kernel-server.service
+    systemd:
+      daemon_reload: yes
+      state: started
+      name: nfs-kernel-server.service
+
+  - name: Apply NFS configuration
+    shell: exportfs -rav
