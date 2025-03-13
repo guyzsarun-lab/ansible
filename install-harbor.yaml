@@ -1,0 +1,57 @@
+---
+- name: Install Harbor
+  hosts: ubuntu-server
+
+  vars:
+    app_path: /app/harbor
+    data_dir: /mnt/nfs_share/harbor
+    harbor_version: v2.12.2
+
+  tasks:
+  - name: Create harbor directory
+    become: yes
+    file:
+      path: "{{ item }}"
+      state: directory
+      owner: devops
+      group: devops
+      mode: '0775'
+    loop:
+      - "{{ app_path }}"
+
+  - unarchive:
+      src: https://github.com/goharbor/harbor/releases/download/{{ harbor_version }}/harbor-online-installer-{{ harbor_version }}.tgz
+      dest: /tmp
+      remote_src: yes
+
+  - name: Copy harbor installation file from tmp
+    copy:
+      src: /tmp/harbor/
+      dest: "{{ app_path }}"
+      remote_src: true
+
+  - name: Copy local Harbor configuration files
+    copy:
+      src: files/harbor/
+      dest: "{{ app_path }}"
+
+  - name: Update template file
+    replace:
+      path: "{{ app_path }}/harbor.yml"
+      regexp: 'HARBOR_DATA_DIR'
+      replace: '{{ data_dir }}'
+
+  - name: Prepare harbor compose
+    become: yes
+    shell:
+      chdir: "{{ app_path }}"
+      cmd: ./install.sh --with-trivy
+
+#   - name: Create and start services
+#     community.docker.docker_compose_v2:
+#       project_src: "{{ app_path }}"
+#       files:
+#       - docker-compose.yaml
+#     register: output
+
+
