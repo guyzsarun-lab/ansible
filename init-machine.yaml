@@ -1,6 +1,7 @@
 - name: Init Machine
   hosts: proxmox_vm
   gather_facts: true
+  become: true
 
   tasks:
   - name: Install essentials
@@ -11,7 +12,7 @@
         - gpg
         - docker-compose
         # - prometheus-node-exporter
-        # - nfs-common
+        - nfs-common
       state: present
       update_cache: yes
 
@@ -27,7 +28,6 @@
         name: "{{ ansible_user }}"
         groups: docker
         append: yes
-    become: true
 
   - name: Update hostname
     hostname:
