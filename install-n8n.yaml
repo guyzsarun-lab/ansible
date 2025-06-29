@@ -1,0 +1,48 @@
+---
+- name: Install n8n
+  hosts: app-server
+
+  vars:
+    app_path: /app/n8n
+    data_dir: /mnt/n8n
+
+  tasks:
+    - name: Create n8n directory
+      become: yes
+      file:
+        path: "{{ item }}"
+        state: directory
+        owner: devops
+        group: devops
+        mode: '0775'
+      loop:
+        - "{{ app_path }}"
+        - "{{ data_dir }}"
+
+    - name: Mount an NFS volume
+      become: yes
+      ansible.posix.mount:
+        src: 172.16.0.4:/home/devops/nfs_share/n8n
+        path: "{{ data_dir }}"
+        opts: rw,sync
+        state: mounted
+        fstype: nfs
+
+    - name: Copy compose file
+      copy:
+        src: files/n8n/
+        dest: "{{ app_path }}"
+
+    - name: Update compose file
+      replace:
+        path: "{{ app_path }}/docker-compose.yaml"
+        regexp: 'N8N_DATA_DIR'
+        replace: '{{ data_dir }}'
+
+
+    - name: Create and start services
+      community.docker.docker_compose_v2:
+        project_src: "{{ app_path }}"
+        files:
+        - docker-compose.yaml
+      register: output
