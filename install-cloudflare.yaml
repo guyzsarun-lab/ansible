@@ -1,0 +1,37 @@
+---
+- name: Install Cloudflare
+  hosts: cloudflare-tunnel
+
+  vars:
+    app_path: /app/cloudflare
+
+  tasks:
+    - name: Create Cloudflare directory
+      become: yes
+      file:
+        path: "{{ item }}"
+        state: directory
+        owner: devops
+        group: devops
+        mode: '0775'
+      loop:
+        - "{{ app_path }}"
+
+    - name: Copy compose file
+      copy:
+        src: files/cloudflare/
+        dest: "{{ app_path }}"
+
+    - name: Update compose file
+      replace:
+        path: "{{ app_path }}/docker-compose.yaml"
+        regexp: 'CLOUDFLARE_TUNNEL_TOKEN'
+        replace: "{{ CLOUDFLARE_TUNNEL_TOKEN }}"
+
+
+    - name: Create and start services
+      community.docker.docker_compose_v2:
+        project_src: "{{ app_path }}"
+        files:
+        - docker-compose.yaml
+      register: output
