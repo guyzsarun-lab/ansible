@@ -1,0 +1,12 @@
+version: '3.8'
+
+services:
+  cloudflared:
+    image: cloudflare/cloudflared:2025.6.1
+    restart: unless-stopped
+    command: tunnel --no-autoupdate run
+    environment:
+      - TUNNEL_TOKEN=CLOUDFLARE_TUNNEL_TOKEN
+    # If you prefer using cert.pem/config.yml instead of token, mount the config
+    # volumes:
+    #   - ./config:/etc/cloudflared
