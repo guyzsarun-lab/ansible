@@ -49,6 +49,21 @@ services:
   kong:
     image: "${KONG_DOCKER_TAG:-kong:3.9.0}"
     user: "${KONG_USER:-kong}"
+    logging:
+      driver: loki
+      options:
+        loki-url: "http://k8s.proxmox.local/loki/api/v1/push"
+        loki-batch-size: "10"
+        loki-pipeline-stages: |
+          - regex:
+              expression: '^(?P<src_ip>[\w\.]+) - (?P<user>[^ ]*) \[(?P<timestamp>.*)\] "(?P<method>[^ ]*) (?P<request_url>[^ ]*) (?P<request_http_protocol>[^ ]*)" (?P<status>[\d]+) (?P<bytes_out>[\d]+) "(?P<http_referer>[^"]*)" "(?P<user_agent>[^"]*)"?'
+          - labels:
+              src_ip:
+              method:
+              request_url:
+              http_referer:
+              status:
+              user_agent:
     environment:
       <<: *kong-env
       KONG_REAL_IP_HEADER: Cf-Connecting-IP
